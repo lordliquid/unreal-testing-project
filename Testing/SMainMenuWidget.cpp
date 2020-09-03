@@ -9,7 +9,6 @@
 
 void SMainMenuWidget::Construct(const FArguments& InArgs)
 {
-
     bCanSupportFocus = true;
     
     OwningHUD = InArgs._OwningHUD;

@@ -36,7 +36,7 @@ public:
     UPROPERTY(EditAnywhere)
     USM_State* QuestStateMachine;
 
-    // If true, the InputList is a blacklist. Otherwise it's a whitelist.
+    // If true, the InputList is a blacklist. Otherwise, it's a whitelist.
     UPROPERTY(EditAnywhere)
     uint32 bInputBlackList : 1;
 

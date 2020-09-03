@@ -7,7 +7,7 @@
 #include "Resource.generated.h"
 
 // This class does not need to be modified.
-UINTERFACE(MinimalAPI, meta = (Blueprintable))
+UINTERFACE(MinimalAPI, Blueprintable)
 class UResource : public UInterface
 {
 	GENERATED_BODY()
@@ -22,4 +22,13 @@ class TESTING_API IResource
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void Harvest();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void DisplayWidget();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void HideWidget();
 };

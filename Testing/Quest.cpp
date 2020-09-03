@@ -5,6 +5,8 @@
 
 UQuestStatus::UQuestStatus()
 {
+    PrimaryComponentTick.bStartWithTickEnabled = false;
+    PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UQuestStatus::BeginPlay()

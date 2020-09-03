@@ -4,6 +4,7 @@
 
 #include "TestingCharacter.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "ItemBase.h"
 #include "MenuHUD.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -12,6 +13,7 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATestingCharacter
@@ -61,32 +63,35 @@ void ATestingCharacter::Tick(float delta)
 {
 	Super::Tick(delta);
 
-	// const FVector ActorForward = GetActorForwardVector();
-	// const FVector WorldLocation = GetActorLocation();
-	//
-	// const FVector Forward = UKismetMathLibrary::Multiply_VectorFloat(ActorForward, SelectDistance);
-	//
-	// FVector Distance;
-	//
-	// Distance.X = WorldLocation.X;
-	// Distance.Y = WorldLocation.Y;
-	// Distance.Z = WorldLocation.Z + SelectHeight;
-	//
-	// TArray<struct FHitResult> hits;
-	// hits.Reset();
-	//
-	// UWorld* World = GetWorld();
-	// static FName WeaponFireTag = FName(TEXT("WeaponTrace"));
-
-	//FCollisionQueryParams TraceParams(WeaponFireTag, true, Instigator);
-	//TraceParams.bTraceAsyncScene = true;
-	//TraceParams.bReturnPhysicalMaterial = true;
-
-	//bool GotHit = World->LineTraceMultiByChannel(hits, Distance, Forward, (ECollisionChannel)3, TraceParams);
-	//hits.Reset();
-
-	// UKismetSystemLibrary::LineTraceMulti(this, Distance, Forward, (ECollisionChannel) 3, true, )
+	UpdateSelectedItem();
 }
+
+// 	// const FVector ActorForward = GetActorForwardVector();
+// 	// const FVector WorldLocation = GetActorLocation();
+// 	//
+// 	// const FVector Forward = UKismetMathLibrary::Multiply_VectorFloat(ActorForward, SelectDistance);
+// 	//
+// 	// FVector Distance;
+// 	//
+// 	// Distance.X = WorldLocation.X;
+// 	// Distance.Y = WorldLocation.Y;
+// 	// Distance.Z = WorldLocation.Z + SelectHeight;
+// 	//
+// 	// TArray<struct FHitResult> hits;
+// 	// hits.Reset();
+// 	//
+// 	// UWorld* World = GetWorld();
+// 	// static FName WeaponFireTag = FName(TEXT("WeaponTrace"));
+//
+// 	//FCollisionQueryParams TraceParams(WeaponFireTag, true, Instigator);
+// 	//TraceParams.bTraceAsyncScene = true;
+// 	//TraceParams.bReturnPhysicalMaterial = true;
+//
+// 	//bool GotHit = World->LineTraceMultiByChannel(hits, Distance, Forward, (ECollisionChannel)3, TraceParams);
+// 	//hits.Reset();
+//
+// 	// UKismetSystemLibrary::LineTraceMulti(this, Distance, Forward, (ECollisionChannel) 3, true, )
+// }
 
 //////////////////////////////////////////////////////////////////////////
 // Input
@@ -118,6 +123,9 @@ void ATestingCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &ATestingCharacter::OnResetVR);
 	PlayerInputComponent->BindAction("OpenMenu", IE_Pressed, this, &ATestingCharacter::OpenMenu);
+
+	// Selected Item Bindings
+	PlayerInputComponent->BindAction("UseItem", IE_Pressed, this, &ATestingCharacter::UseItem);
 }
 
 void ATestingCharacter::OpenMenu()
@@ -128,6 +136,69 @@ void ATestingCharacter::OpenMenu()
 	}
 }
 
+FHitResult ATestingCharacter::GetSelectedHit()
+{
+	const FVector WorldLocation = FollowCamera->GetComponentTransform().GetLocation();
+	const FRotator WorldRotation = FollowCamera->GetComponentTransform().GetRotation().Rotator();
+	const FVector ForwardVector = WorldRotation.Vector();
+	const FVector VectorOffset = UKismetMathLibrary::Multiply_VectorFloat(ForwardVector, 1500.f);
+	const FVector EndVector = UKismetMathLibrary::Add_Vector4Vector4(WorldLocation, VectorOffset);
+	const TArray<AActor*> Ignored;
+
+	FHitResult HitResult;
+
+	UKismetSystemLibrary::LineTraceSingle(GetWorld(), WorldLocation, EndVector, TraceTypeQuery3, true, Ignored, EDrawDebugTrace::None, HitResult, true, FLinearColor::Green, FLinearColor::Green, .1f);
+
+	return HitResult;
+}
+
+void ATestingCharacter::UpdateSelectedItem()
+{
+	AActor* HitActor = GetSelectedHit().GetActor();
+
+	if (HitActor)
+	{
+		if (SelectedItem != HitActor)
+		{
+			if (HitActor->GetClass()->ImplementsInterface(USelectable::StaticClass()))
+			{
+				ISelectable* Selectable = Cast<ISelectable>(HitActor);
+				Selectable->Execute_SelectItem(HitActor);
+				Selectable->Execute_HighlightItem(HitActor);
+				Selectable->SelectItem_Implementation();
+				Selectable->HighlightItem_Implementation();
+			}
+			SelectedItemChanged(SelectedItem, HitActor);
+			SelectedItem = HitActor;
+		}
+	}
+	else
+	{
+		SelectedItem = nullptr;
+	}
+}
+
+UResource* ATestingCharacter::GetResource()
+{
+	return Cast<UResource>(GetSelectedHit().GetActor());
+}
+
+AResourceBase* ATestingCharacter::GetResourceBase()
+{
+	return Cast<AResourceBase>(GetSelectedHit().GetActor());
+}
+
+void ATestingCharacter::UseItem()
+{
+	if (SelectedItem)
+	{
+		AItemBase* ItemBase = Cast<AItemBase>(SelectedItem);
+		if (ItemBase)
+		{
+			ItemBase->UseItem(this);
+		}
+	}
+}
 
 void ATestingCharacter::OnResetVR()
 {

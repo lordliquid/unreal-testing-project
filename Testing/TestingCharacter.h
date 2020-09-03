@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Inventory.h"
+#include "Resource.h"
+#include "ResourceBase.h"
 #include "TestingCharacter.generated.h"
 
 class AMenuHUD;
@@ -14,32 +16,36 @@ class ATestingCharacter : public ACharacter
 	GENERATED_BODY()
 
 	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Testing Character", meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
 
 	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Testing Character", meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Inventory", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Testing Character", meta = (AllowPrivateAccess = "true"))
 	class UInventory* Inventory;
 	
 public:
 	ATestingCharacter();
+	virtual void Tick(float delta) override;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Testing Character", meta = (AllowPrivateAccess = "true"))
 	float BaseTurnRate;
 
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Testing Character", meta = (AllowPrivateAccess = "true"))
 	float BaseLookUpRate;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Testing Character", meta = (AllowPrivateAccess = "true"))
 	float SelectDistance;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Testing Character", meta = (AllowPrivateAccess = "true"))
 	float SelectHeight;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Testing Character", meta = (AllowPrivateAccess = "true"))
+	AActor* SelectedItem;
 
 protected:
 
@@ -70,14 +76,33 @@ protected:
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
-	virtual void Tick(float delta) override;
+	// virtual void Tick(float delta) override;
 
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
 
+	UFUNCTION(BlueprintCallable)
 	void OpenMenu();
+
+	UFUNCTION(BlueprintCallable)
+	FHitResult GetSelectedHit();
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void SelectedItemChanged(AActor* PreviousActor, AActor* NewActor);
+	
+	UFUNCTION(BlueprintCallable)
+	void UpdateSelectedItem();
+
+	UFUNCTION(BlueprintCallable)
+	UResource* GetResource();
+
+	UFUNCTION(BlueprintCallable)
+	AResourceBase* GetResourceBase();
+
+	UFUNCTION(BlueprintCallable)
+	void UseItem();
 	
 public:
 	/** Returns CameraBoom subobject **/
